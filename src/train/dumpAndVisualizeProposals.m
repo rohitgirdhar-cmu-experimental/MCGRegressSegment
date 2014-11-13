@@ -59,5 +59,5 @@ for i = 1 : TOPN
     fprintf(imgnames_fid, '%s\n', fname);
 end
 fclose(scores_fid);
-fclose(imagenames_fid);
+fclose(imgnames_fid);
 
