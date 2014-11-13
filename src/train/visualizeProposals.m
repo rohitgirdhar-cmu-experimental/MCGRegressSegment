@@ -1,7 +1,8 @@
-function visualizeProposals(resDir, imgsDir)
+function visualizeProposals(resDir, vocDevKit)
+imgsDir = fullfile(vocDevKit, 'JPEGImages');
 outputDir = fullfile(resDir, 'visSegs');
 outputFile = fullfile(resDir, 'topProposals.mat');
-files = getAllFiles(resDir);
+files = getAllFiles(fullfile(vocDevKit, 'SegmentationObject'));
 top_masks = {};
 top_scores = [];
 top_imgs = {};
@@ -10,10 +11,14 @@ cnt = 0;
 for file = files(:)'
     cnt = cnt + 1;
     file = file{:};
-    load(fullfile(resDir, file));
+    [~, fname, ~] = fileparts(file);
+    try
+        load(fullfile(resDir, [fname, '.mat']));
+    catch
+        continue;
+    end
     [ious, order] = sort(IoUs, 'descend');
     top_scores = [top_scores, ious];
-    [~, fname, ~] = fileparts(file);
     for i = 1 : length(order)
         id = order(i);
         top_masks{end + 1} = ...
