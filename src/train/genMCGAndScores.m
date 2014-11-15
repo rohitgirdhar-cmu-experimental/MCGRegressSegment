@@ -14,7 +14,7 @@ for file = files(:)'
     file = file{:};
     [~, fname, ~] = fileparts(file);
     out_file = fullfile(resDir, [fname '.mat']);
-    if exist(out_file, 'file') || exist([out_file, '.lock'])
+    if exist(out_file, 'file') || exist([out_file, '.lock'], 'dir')
         fprintf('Already done for %s\n', fname);
         continue;
     end
