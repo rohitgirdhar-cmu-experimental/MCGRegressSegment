@@ -1,12 +1,11 @@
-from sklearn.svm import SVR
 import numpy as np
 import argparse
 import sys, os
+import pickle
+sys.path.insert(0, '/exports/cyclops/software/ml/libsvm/python/')
+import svmutil # for libsvm
 
 def main():
-    caffe_root = '/exports/cyclops/software/vision/caffe/'
-    sys.path.insert(0, caffe_root + 'python')
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--resdir', type=str, required=True,
             help="Results directory")
@@ -21,9 +20,10 @@ def main():
     for i in range(1, len(scores) + 1):
         feats.append(np.fromfile(os.path.join(FEAT_DIR, str(i) + '.txt'), sep='\n'))
     feats = np.array(feats)
-    clf = SVR()
-    clf.fit(feats, scores)
-    np.save(os.path.join(args.resdir, 'svr.npy'), clf)
+    print('Read all features')
+    model = svmutil.svm_train(scores.tolist(), feats.tolist(), '-s 4')
+    print svmutil.svm_predict(scores.tolist(), feats.tolist(), model)
+    svmutil.svm_save_model(os.path.join(args.resdir, 'svr.model'), model)
 
 if __name__ == '__main__':
     main()
