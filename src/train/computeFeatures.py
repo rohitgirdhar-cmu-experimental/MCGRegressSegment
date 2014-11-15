@@ -97,7 +97,7 @@ def rmdir_noerror(path):
     try:
         os.rmdir(path)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
+        if exc.errno == errno.EEXIST:
             pass
         else:
             raise
