@@ -75,7 +75,7 @@ def main():
             seg_image = caffe.io.load_image(os.path.join(cur_segs_dir, segfile))
             seg_image = scipy.misc.imresize(seg_image, (256, 256))
             idx = (seg_image == 0)
-            temp_image = input_image
+            temp_image = np.copy(input_image)
             temp_image[idx] = meanImg[idx]
 
             prediction = net.predict([temp_image])
@@ -88,6 +88,9 @@ def main():
 
             segname, _ = os.path.splitext(segfile)
             np.savetxt(os.path.join(cur_out_dir, segname + '.txt'), feature, '%.7f')
+            # To debug
+            # scipy.misc.imsave(os.path.join(cur_out_dir, segname + '.jpg'), temp_image)
+            del temp_image
         
         print 'Done for %s (%d / %d)' % (img, count, len(imgsList))
 
