@@ -1,7 +1,6 @@
 import numpy as np
 import argparse
 import sys, os
-import pickle
 sys.path.insert(0, '/exports/cyclops/software/ml/libsvm/python/')
 import svmutil # for libsvm
 
@@ -22,7 +21,6 @@ def main():
     feats = np.array(feats)
     print('Read all features')
     model = svmutil.svm_train(scores.tolist(), feats.tolist(), '-s 4')
-    print svmutil.svm_predict(scores.tolist(), feats.tolist(), model)
     svmutil.svm_save_model(os.path.join(args.resdir, 'svr.model'), model)
 
 if __name__ == '__main__':
