@@ -26,7 +26,7 @@ def main():
     RES_DIR = args.resdir
     SEG_DIR = os.path.join(RES_DIR, 'mcgprops')
     OUT_DIR = os.path.join(RES_DIR, 'features', FEAT)
-    IMGS_DIR = os.path.join(VOC_DIR, 'JPEGImages_person')
+    IMGS_DIR = os.path.join(VOC_DIR, 'JPEGImages')
 
     if not os.path.exists(OUT_DIR):
         mkdir_p(OUT_DIR)
@@ -89,7 +89,7 @@ def main():
             segname, _ = os.path.splitext(segfile)
             np.savetxt(os.path.join(cur_out_dir, segname + '.txt'), feature, '%.7f')
         
-        print 'Done for %s (%d / %d)' % (img, count, len(imgslist))
+        print 'Done for %s (%d / %d)' % (img, count, len(imgsList))
 
 def mkdir_p(path):
     try:
