@@ -27,6 +27,7 @@ def main():
         feats = []
         cur_feat_dir = os.path.join(FEAT_DIR, img)
         OUT_PATH = os.path.join(cur_feat_dir, 'scores.txt')
+        OUT_TOP_PATH = os.path.join(cur_feat_dir, 'top.txt')
         LOCK_PATH = OUT_PATH + '.lock'
 
         if os.path.exists(OUT_PATH) or os.path.exists(LOCK_PATH):
@@ -34,9 +35,11 @@ def main():
         mkdir_p(LOCK_PATH)
         print('Doing for %s %d / %d' % (img, cnt, len(imgs)))
 
+        segIdxs = []
         for i in range(1, 101):
             try:
                 feats.append(np.fromfile(os.path.join(cur_feat_dir, str(i) + '.txt'), sep='\n'))
+                segIdxs.append(i)
             except:
                 continue
         feats = np.array(feats)
@@ -44,7 +47,12 @@ def main():
         model = svmutil.svm_load_model(args.modelfpath)
         nFeat = np.shape(feats)[0]
         labels, acc, _ = svmutil.svm_predict(np.ones((nFeat, 1)), feats.tolist(), model)
-        np.savetxt(OUT_PATH, labels, '%.7f') 
+        np.savetxt(OUT_PATH, labels, '%.7f')
+        # save sorted list
+        index = np.argsort(labels).tolist()[::-1]
+        orderedSegIdxs = [segIdxs[i] for i in index]
+        np.savetxt(OUT_TOP_PATH, orderedSegIdxs, '%d')
+
         rmdir_noerror(LOCK_PATH)
         print('done')
 
