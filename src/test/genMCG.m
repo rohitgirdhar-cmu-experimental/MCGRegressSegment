@@ -1,6 +1,9 @@
-function genMCG(imgsDir, resDir)
+function genMCG(imgsDir, resDir, nProps)
 if ~isdeployed
     addpath(genpath('/IUS/vmr105/rohytg/projects/003_SelfieSeg/003_SDS/MCG-PreTrained'));
+end
+if isdeployed
+    nProps = str2num(nProps);
 end
 
 system(['mkdir -p ' resDir]);
@@ -22,7 +25,7 @@ for file = files(:)'
 
     [candidates_mcg, ~] = im2mcg(I,'accurate');
     
-    for id = 1 : min(100, numel(candidates_mcg.labels))
+    for id = 1 : min(nProps, numel(candidates_mcg.labels))
         mask = ismember(candidates_mcg.superpixels, candidates_mcg.labels{id});
         imwrite(mask, fullfile(out_dir, [num2str(id), '.jpg']));
     end
