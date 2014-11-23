@@ -1,11 +1,13 @@
 #!/usr/bin/python2.7
 
 import numpy as np
-import scipy
+import scipy, scipy.io
 import matplotlib.pyplot as plt
 import argparse
 import os, errno
 import sys
+import gc
+import pdb  # for debugging
 
 def main():
     caffe_root = '/exports/cyclops/software/vision/caffe/'
@@ -23,12 +25,14 @@ def main():
     IMGS_DIR = args.imagesdir
     FEAT = args.feature
     RES_DIR = args.resdir
-    IMGS_LIST_FPATH = os.path.join(RES_DIR, 'topimgs.txt')
-    SEG_DIR = os.path.join(RES_DIR, 'top_proposed_masks')
     OUT_DIR = os.path.join(RES_DIR, 'features', FEAT)
+    SEL_MAT_PATH = os.path.join(RES_DIR, 'selProposals.mat')
+    SCORE_PATH = os.path.join(RES_DIR, 'scores.txt')
     if not os.path.exists(OUT_DIR):
         mkdir_p(OUT_DIR)
 
+    sel = scipy.io.loadmat(SEL_MAT_PATH)
+    gc.collect() # required, loadmat is crazy with memory usage
     import caffe
 
     # Set the right path to your model definition file, pretrained model weights,
@@ -42,13 +46,15 @@ def main():
 
     net = caffe.Classifier(MODEL_FILE, PRETRAINED,
             mean=mean, channel_swap=(2,1,0), raw_scale=255, image_dims=(256, 256))
-
+    
     net.set_phase_test()
     net.set_mode_cpu()
     
-    fid = open(IMGS_LIST_FPATH)
-    topimgs = fid.readlines()
-    topimgs = map(lambda x: x.strip(), topimgs)
+    nImgs = np.shape(sel['imgs'][0])[0]
+    topimgs = []
+    imgslist = sel['imgs'][0]
+    for i in range(nImgs):
+        topimgs.append(imgslist[i][0])
 
     if not os.path.isdir(OUT_DIR):
         mkdir_p(OUT_DIR)
@@ -57,7 +63,6 @@ def main():
     for topimg in topimgs:
         count += 1
         fpath = os.path.join(IMGS_DIR, topimg + '.jpg')
-        segpath = os.path.join(SEG_DIR, str(count) + '.jpg')
         out_fpath = os.path.join(OUT_DIR, str(count) + '.txt')
         lock_fpath = os.path.join(OUT_DIR, str(count) + '.lock')
 
@@ -67,13 +72,24 @@ def main():
         
         mkdir_p(lock_fpath)
         input_image = caffe.io.load_image(fpath)
-        input_image = scipy.misc.imresize(input_image, (256, 256))
-        seg_image = caffe.io.load_image(segpath)
-        seg_image = scipy.misc.imresize(seg_image, (256, 256))
+        seg_image = sel['masks'][0][count - 1]
         idx = (seg_image == 0)
-        input_image[idx] = meanImg[idx]
+        bbox = sel['bboxes'][count - 1]
+        input_image_crop = input_image[bbox[0] : bbox[2], bbox[1] : bbox[3]]
+        idx = idx[bbox[0] : bbox[2], bbox[1] : bbox[3]]
 
-        prediction = net.predict([input_image])
+# WITHOUT MASKING!!!
+#        mean_temp = scipy.misc.imresize(meanImg, np.shape(idx))
+#        input_image_crop[idx] = meanImg[idx]
+#        input_image_final = scipy.misc.imresize(input_image_crop, (256, 256))
+        try:
+            input_image_res = scipy.misc.imresize(input_image_crop, (256, 256))
+            prediction = net.predict([input_image_res])
+        except:
+            print 'Unable to do for', topimg
+            rmdir_noerror(lock_fpath)
+            np.savetxt(out_fpath, [])
+            continue
         if FEAT == 'prediction':
             feature = prediction.flat
         else:
