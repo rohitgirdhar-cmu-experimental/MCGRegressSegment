@@ -20,7 +20,7 @@ else
         try
             load(fullfile(mcgDir, [fname, '.mat']), 'candidates_mcg');
         catch e
-            fprintf(2. '%s\n', getReport(e));
+            warning('Unable to do for %s\n', fname);
             continue;
         end
         for i = 1 : 20 % take 20 from each image
