@@ -36,7 +36,7 @@ def main():
 
     # Set the right path to your model definition file, pretrained model weights,
     # and the image you would like to classify.
-    MODEL_FILE = 'deploy.prototxt'
+    MODEL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'deploy.prototxt')
     mean = np.load(caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy')
     # convert into image for visualization and processing
     meanImg = mean.swapaxes(0,1).swapaxes(1,2)
