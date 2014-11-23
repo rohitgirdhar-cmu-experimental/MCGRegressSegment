@@ -27,7 +27,6 @@ def main():
     RES_DIR = args.resdir
     OUT_DIR = os.path.join(RES_DIR, 'features', FEAT)
     SEL_MAT_PATH = os.path.join(RES_DIR, 'selProposals.mat')
-    SCORE_PATH = os.path.join(RES_DIR, 'scores.txt')
     if not os.path.exists(OUT_DIR):
         mkdir_p(OUT_DIR)
 
