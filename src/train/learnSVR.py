@@ -3,6 +3,7 @@ import argparse
 import sys, os
 sys.path.insert(0, '/exports/cyclops/software/ml/libsvm/python/')
 import svmutil # for libsvm
+import pdb
 
 def main():
     parser = argparse.ArgumentParser()
@@ -17,11 +18,13 @@ def main():
     scores = np.fromfile(SCORES_FPATH, sep='\n')
     feats = []
     for i in range(1, len(scores) + 1):
-        feats.append(np.fromfile(os.path.join(FEAT_DIR, str(i) + '.txt'), sep='\n'))
-    feats = np.array(feats)
+        feats.append(np.fromfile(os.path.join(FEAT_DIR, str(i) + '.txt'), sep='\n').tolist())
+#   feats = np.array(feats)
     print('Read all features')
-    model = svmutil.svm_train(scores.tolist(), feats.tolist(), '-s 4')
+    params = svmutil.svm_parameter('-s 4 -t 2')
+    model = svmutil.svm_train(svmutil.svm_problem(scores, feats), params)
     svmutil.svm_save_model(os.path.join(args.resdir, 'svr.model'), model)
+    print svmutil.svm_predict(scores, feats, model)
 
 if __name__ == '__main__':
     main()
