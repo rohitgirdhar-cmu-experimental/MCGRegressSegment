@@ -15,6 +15,10 @@ for file = files(:)'
     cnt = cnt + 1;
     file = file{:};
     [~, fname, ~] = fileparts(file);
+    if exist(fullfile(outputDir, fname), 'dir')
+        fprintf('Already done for %s\n', fname);
+        continue;
+    end
     try
         load(fullfile(mcgDir, [fname, '.mat']), 'candidates_mcg');
     catch e
