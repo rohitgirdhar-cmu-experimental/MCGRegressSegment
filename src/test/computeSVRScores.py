@@ -5,6 +5,8 @@ import glob
 import numpy as np
 sys.path.insert(0, '/exports/cyclops/software/ml/libsvm/python/') 
 import svmutil
+import scipy.io
+import pdb
 
 def main():
     parser = argparse.ArgumentParser()
@@ -14,6 +16,8 @@ def main():
             help='SVR model pickle file path')
     parser.add_argument('-f', '--feature', type=str, default='fc7',
             help='Feature used')
+    parser.add_argument('-n', '--numfeatures', type=int, required=True,
+            help='Number of features for which to compute the scores. Assumes the presense of 1 to n.txt feature files')
 
     args = parser.parse_args()
     FEAT_DIR = os.path.join(args.resdir, 'features', args.feature)
@@ -22,39 +26,27 @@ def main():
     imgs = [os.path.basename(x) for x in imgs]
 
     cnt = 0
-    for img in imgs:
-        cnt = cnt + 1
+    OUT_PATH = os.path.join(FEAT_DIR, 'scores.txt')
+    fout = open(OUT_PATH, 'w')
+    
+    model = svmutil.svm_load_model(args.modelfpath)
+    for seg_id in range(1, args.numfeatures):
+        img = str(seg_id) + '.txt'
         feats = []
-        cur_feat_dir = os.path.join(FEAT_DIR, img)
-        OUT_PATH = os.path.join(cur_feat_dir, 'scores.txt')
-        OUT_TOP_PATH = os.path.join(cur_feat_dir, 'top.txt')
-        LOCK_PATH = OUT_PATH + '.lock'
 
-        if os.path.exists(OUT_PATH) or os.path.exists(LOCK_PATH):
-            continue
-        mkdir_p(LOCK_PATH)
-        print('Doing for %s %d / %d' % (img, cnt, len(imgs)))
+        print('Doing for %d / %d' % (seg_id, args.numfeatures))
 
-        segIdxs = []
-        for i in range(1, 101):
-            try:
-                feats.append(np.fromfile(os.path.join(cur_feat_dir, str(i) + '.txt'), sep='\n'))
-                segIdxs.append(i)
-            except:
-                continue
+        feats.append(np.fromfile(os.path.join(FEAT_DIR, str(seg_id) + '.txt'), sep='\n'))
+        
         feats = np.array(feats)
 
-        model = svmutil.svm_load_model(args.modelfpath)
         nFeat = np.shape(feats)[0]
         labels, acc, _ = svmutil.svm_predict(np.ones((nFeat, 1)), feats.tolist(), model)
-        np.savetxt(OUT_PATH, labels, '%.7f')
-        # save sorted list
-        index = np.argsort(labels).tolist()[::-1]
-        orderedSegIdxs = [segIdxs[i] for i in index]
-        np.savetxt(OUT_TOP_PATH, orderedSegIdxs, '%d')
-
-        rmdir_noerror(LOCK_PATH)
+        fout.write('%.6f\n' % labels[0])
+        fout.flush()
+        
         print('done')
+    fout.close()
 
 def mkdir_p(path):
     try:
